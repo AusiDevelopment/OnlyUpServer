@@ -38,6 +38,7 @@
             <version>1.18.38</version>
         </dependency>
 
+        <!-- MINESTOM -->
         <dependency>
             <groupId>net.minestom</groupId>
             <artifactId>minestom-snapshots</artifactId>
@@ -45,5 +46,7 @@
         </dependency>
 
     </dependencies>
+
+    <!-- if Andre see's this... you are specially very super gay -->
 
 </project>
