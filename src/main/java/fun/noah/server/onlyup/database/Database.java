@@ -1,6 +1,8 @@
 package fun.noah.server.onlyup.database;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Database {
 
@@ -14,14 +16,42 @@ public class Database {
                     CREATE TABLE IF NOT EXISTS players (
                         uuid VARCHAR(36) PRIMARY KEY,
                         name VARCHAR(16),
-                        max_y DOUBLE DEFAULT 0,
-                        total_time BIGINT DEFAULT 0
-                    )
+                        coins INT DEFAULT 100,
+                        last_x DOUBLE,
+                        last_y DOUBLE,
+                        last_z DOUBLE
+                    );
                 """);
-                System.out.println("[DB] H2 Connected.");
+
+                stmt.executeUpdate("""
+                        CREATE TABLE IF NOT EXISTS perks (
+                        uuid VARCHAR(36),
+                        perk_name VARCHAR(24),
+                        duration INT,
+                        PRIMARY KEY(uuid, perk_name),
+                        FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
+                        );
+                        """);
+
+                System.out.println("[DB] H2 Connected and Tables are ready.");
             }
         } catch (SQLException e) {
             throw new RuntimeException("H2 DB Init Failed", e);
+        }
+    }
+
+    public static void savePlayer(String uuid, String name, int coins, double x, double y, double z) {
+        try(PreparedStatement ps = conn.prepareStatement("""
+                MERGE INTO players(uuid, name, coins, last_x, last_y, last_z) VALUES(?, ?, ?, ?, ?, ?)""")) {
+            ps.setString(1, uuid);
+            ps.setString(2, name);
+            ps.setInt(3, coins);
+            ps.setDouble(4, x);
+            ps.setDouble(5, y);
+            ps.setDouble(6, z);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -38,6 +68,43 @@ public class Database {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public static ResultSet loadPlayer2(String uuid) {
+        try {
+            PreparedStatement ps = conn.prepareStatement("SELECT * FROM players WHERE uuid = ?");
+            ps.setString(1, uuid);
+            return ps.executeQuery();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static void savePerk(String uuid, String perkName, int duration) {
+        try(PreparedStatement ps = conn.prepareStatement("""
+                MERGE INTO perks (uuid, perk_name, duration) VALUES (?, ?, ?)""")) {
+            ps.setString(1, uuid);
+            ps.setString(2, perkName);
+            ps.setInt(3, duration);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static List<String> loadPerks(String uuid) {
+        List<String> perks = new ArrayList<>();
+        try(PreparedStatement ps = conn.prepareStatement("SELECT perk_name FROM perks WHERE uuid = ?")) {
+            ps.setString(1, uuid);
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()) {
+                perks.add(rs.getString("perk_name"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return perks;
     }
 
     public static ResultSet loadPlayer(String uuid) {
