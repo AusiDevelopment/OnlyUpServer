@@ -50,6 +50,7 @@ public class Database {
             ps.setDouble(5, y);
             ps.setDouble(6, z);
             ps.executeUpdate();
+            System.out.println("Saved a Player named " + name);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -74,6 +75,7 @@ public class Database {
         try {
             PreparedStatement ps = conn.prepareStatement("SELECT * FROM players WHERE uuid = ?");
             ps.setString(1, uuid);
+            System.out.println("Loaded a Player with UUID: " + uuid);
             return ps.executeQuery();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -88,6 +90,7 @@ public class Database {
             ps.setString(2, perkName);
             ps.setInt(3, duration);
             ps.executeUpdate();
+            System.out.println("Saved a Perk with name " + perkName + " to UUID " + uuid);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -100,6 +103,7 @@ public class Database {
             ResultSet rs = ps.executeQuery();
             while(rs.next()) {
                 perks.add(rs.getString("perk_name"));
+                System.out.println("Added a Perk with the Name " + rs.getString("perk_name") + " ...");
             }
         } catch (SQLException e) {
             e.printStackTrace();

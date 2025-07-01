@@ -1,7 +1,10 @@
 package fun.noah.server.onlyup;
 
 import fun.noah.server.onlyup.database.Database;
+import fun.noah.server.onlyup.manager.CommandManager;
+import fun.noah.server.onlyup.manager.RankManager;
 import fun.noah.server.onlyup.shop.PerkShop;
+import fun.noah.server.onlyup.util.ranks.Rank;
 import net.kyori.adventure.text.Component;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.coordinate.Pos;
@@ -23,6 +26,7 @@ import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
 import net.minestom.server.network.packet.PacketRegistry;
 import net.minestom.server.network.packet.server.play.PlayerListHeaderAndFooterPacket;
+import net.minestom.server.network.player.GameProfile;
 import net.minestom.server.ping.ResponseData;
 import net.minestom.server.potion.Potion;
 import net.minestom.server.potion.PotionEffect;
@@ -34,6 +38,16 @@ import java.util.*;
 
 public class OnlyUpServer {
 
+    public static String getPrefix() {
+        return "§c§lOnly§a§lUp §8§l⚊ §r§7";
+    }
+
+    public static String getLined() {
+        return "§8§m⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊⚊§r";
+    }
+
+    public static RankManager rankManager;
+
     private static Map<String, Integer> coins = new HashMap<>();
 
     public static void main(String[] args) {
@@ -43,6 +57,12 @@ public class OnlyUpServer {
         /*BungeeCordProxy.enable();
         BungeeCordProxy.setBungeeGuardTokens(Set.of("tokens", "here"));*/
         Database.init();
+
+        CommandManager commandManager = new CommandManager();
+        commandManager.registerAll();
+
+        // Ranks
+        rankManager = new RankManager();
 
 
         InstanceManager instanceManager = MinecraftServer.getInstanceManager();
@@ -83,6 +103,14 @@ public class OnlyUpServer {
             player.setTag(Tag.Integer("coins"), coins);
             player.setTag(Tag.String("onlyup:lastBlock"), spawnPos.toString());
 
+            Rank rank = rankManager.getRank(player);
+
+            rankManager.setRank(player, Rank.ADMIN);
+
+            player.setCustomName(Component.text(rank.prefix + " ").append(Component.text(player.getUsername()).color(rank.color)));
+            player.setCustomNameVisible(true);
+            player.setDisplayName(Component.text(rank.prefix + " " + player.getUsername()).color(rank.color));
+
             instance.setBlock(spawnPos, Block.STONE);
 
             List<String> perks = Database.loadPerks(uuid);
@@ -103,9 +131,7 @@ public class OnlyUpServer {
             player.getInventory().setItemStack(4, perkShopItem);
             //coins.put(player.getUuid().toString(), 100);
 
-            if (player.getName().equals("JavaSnippets")) {
-                player.setCustomName(Component.text("NoahDerDeveloper"));
-            }
+
 
 
             //player.sendPlayerListHeaderAndFooter(Component.text("§c§lOnly §a§lUP §8§l| §6§lMinestom §e§lServer"), Component.text(""));
@@ -113,8 +139,25 @@ public class OnlyUpServer {
 
         });
 
+        events.addListener(PlayerChatEvent.class, event -> {
+           Player player = event.getPlayer();
+           Rank rank = rankManager.getRank(player);
+           String message = event.getRawMessage();
+           event.setFormattedMessage(Component.text(rank.prefix + " ").append(
+                   Component.text(player.getUsername() + "§8: §7" + message)
+           ));
+        });
+
+        events.addListener(AsyncPlayerPreLoginEvent.class, event -> {
+            Player player = event.getConnection().getPlayer();
+
+            GameProfile gp = new GameProfile(UUID.fromString("e9013c2f-da01-425f-a48b-516f55e94386"), "GommeHD");
+            event.setGameProfile(gp);
+
+        });
+
         events.addListener(PlayerSkinInitEvent.class, event -> {
-            PlayerSkin skinFromUsername = PlayerSkin.fromUsername("EyNoah");
+            PlayerSkin skinFromUsername = PlayerSkin.fromUsername("GommeHD");
             event.setSkin(skinFromUsername);
         });
 
@@ -175,6 +218,14 @@ public class OnlyUpServer {
 
 
         server.start("0.0.0.0", 25565);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            var players =  MinecraftServer.getConnectionManager().getOnlinePlayers();
+            for (var player : players) {
+                player.kick(Component.text(getLined() + "§8\n" + OnlyUpServer.getPrefix() + " §cServer wurde gestoppt\n§4\n§7Bitte reconnecte in §f§l10-15 §r§7Sekunden erneut§8!\n§8" + getLined()));
+            }
+            System.out.println("[STOP] >> Server gestoppt");
+        }));
 
     }
 
