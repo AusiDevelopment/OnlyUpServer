@@ -105,7 +105,7 @@ public class OnlyUpServer {
 
             Rank rank = rankManager.getRank(player);
 
-            rankManager.setRank(player, Rank.ADMIN);
+            rankManager.setRank(player, Rank.CREATOR);
 
             player.setCustomName(Component.text(rank.prefix + " ").append(Component.text(player.getUsername()).color(rank.color)));
             player.setCustomNameVisible(true);
@@ -151,13 +151,13 @@ public class OnlyUpServer {
         events.addListener(AsyncPlayerPreLoginEvent.class, event -> {
             Player player = event.getConnection().getPlayer();
 
-            GameProfile gp = new GameProfile(UUID.fromString("e9013c2f-da01-425f-a48b-516f55e94386"), "GommeHD");
+            GameProfile gp = new GameProfile(UUID.fromString("e9013c2f-da01-425f-a48b-516f55e94386"), "LxraWrld");
             event.setGameProfile(gp);
 
         });
 
         events.addListener(PlayerSkinInitEvent.class, event -> {
-            PlayerSkin skinFromUsername = PlayerSkin.fromUsername("GommeHD");
+            PlayerSkin skinFromUsername = PlayerSkin.fromUsername("LxraWrld");
             event.setSkin(skinFromUsername);
         });
 
